@@ -44,12 +44,6 @@ Aws.config.update({
     credentials: Aws::Credentials.new(ENV['S3_ACCESS_KEY_ID'], ENV['S3_SECRET_ACCESS_KEY'])
 })
 
-OpenCensus.configure do |c|
-    c.trace.exporter = OpenCensus::Trace::Exporters::Stackdriver.new
-    c.trace.default_sampler = OpenCensus::Trace::Samplers::AlwaysSample.new
-end
-
-
 # Endpoints:
 
 get '/' do
@@ -57,6 +51,11 @@ get '/' do
 end
 
 post '/trace' do
+    OpenCensus.configure do |c|
+        c.trace.exporter = OpenCensus::Trace::Exporters::Stackdriver.new
+        c.trace.default_sampler = OpenCensus::Trace::Samplers::AlwaysSample.new
+    end
+
     job_id = json_params["job_id"]
     #tracefile = s3_trace(job_id)
     tracefile = File.open("trace.json", "r")
