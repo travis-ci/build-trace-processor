@@ -16,12 +16,26 @@ def s3
     @s3 ||= Aws::S3::Client.new
 end
 
-def process_span(job_id, trace_id, trace_json)
+def coalesce_spans(tracefile)
+    spans = {}
+    spans.default = {}
+    tracefile.each_line do |line|
+        span = JSON.parse(line)
+        spans[span['id']] = spans[span['id']].merge(span)
+    end
+    return spans
+end
+
+def process_span(job_id, trace_id, span)
     builder = OpenCensus::Trace::SpanBuilder::PieceBuilder.new 
-    span_name = builder.truncatable_string(trace_json['name'])
-    status = builder.convert_status(trace_json['status'], "")
-    attributes = builder.convert_attributes({"app"=>"build_test", "job_id"=>job_id})
-    return OpenCensus::Trace::Span.new trace_id, trace_json['id'], span_name, Time.at(trace_json['start_time'].to_i*1e-9), Time.at(trace_json['end_time'].to_i*1e-9), parent_span_id: trace_json['parent_id'], attributes: attributes, status: status
+    if span['name'] == 'root'
+        span_name = builder.truncatable_string(job_id.to_s)
+    else
+        span_name = builder.truncatable_string(span['name'])
+    end
+    status = builder.convert_status(span['status'], "")
+    attributes = builder.convert_attributes({"app"=>"build", "job_id"=>job_id})
+    return OpenCensus::Trace::Span.new trace_id, span['id'], span_name, Time.at(span['start_time'].to_i*1e-9), Time.at(span['end_time'].to_i*1e-9), parent_span_id: span['parent_id'], attributes: attributes, status: status
 end
 
 def s3_trace(job_id)
@@ -51,14 +65,13 @@ post '/trace' do
 
     job_id = json_params["job_id"]
     tracefile = s3_trace(job_id)
-
-    # create new trace
+    span_map = coalesce_spans(tracefile)
     max_trace_id = OpenCensus::Trace::SpanContext::MAX_TRACE_ID
     trace_id = rand 1..max_trace_id
     trace_id = trace_id.to_s(16).rjust(32, "0")
     spans = []
-    tracefile.each_line do |line|
-        spans << process_span(job_id, trace_id, JSON.parse(line))
+    span_map.values.each do |span|
+        spans << process_span(job_id, trace_id, span)
     end
     OpenCensus::Trace.config.exporter.export spans
 end
