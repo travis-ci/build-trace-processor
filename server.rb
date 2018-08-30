@@ -43,14 +43,6 @@ def s3_trace(job_id)
     obj.body.read
 end
 
-def authorized?(request)
-  auth_token = ENV['AUTH_TOKEN'].to_s
-  Rack::Utils.secure_compare(
-    request.env['HTTP_AUTHORIZATION'].to_s,
-    "token #{auth_token}"
-  )
-end
-
 
 # Setup
 
@@ -62,8 +54,8 @@ Aws.config.update({
 # Endpoints:
 
 if ENV['AUTH_TOKEN']
-  before do
-    halt 403 unless authorized?(request)
+  use Rack::Auth::Basic, "Protected Area" do |username, password|
+    Rack::Utils.secure_compare(password, ENV['AUTH_TOKEN'])
   end
 end
 
