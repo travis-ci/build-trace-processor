@@ -43,14 +43,6 @@ def s3_trace(job_id)
     obj.body.read
 end
 
-
-# Setup
-
-Aws.config.update({
-    region: 'us-east-1',
-    credentials: Aws::Credentials.new(ENV['S3_ACCESS_KEY_ID'], ENV['S3_SECRET_ACCESS_KEY'])
-})
-
 # Endpoints:
 
 if ENV['AUTH_TOKEN']
