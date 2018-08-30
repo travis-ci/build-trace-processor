@@ -27,7 +27,7 @@ def coalesce_spans(tracefile)
 end
 
 def process_span(job_id, trace_id, span)
-    builder = OpenCensus::Trace::SpanBuilder::PieceBuilder.new 
+    builder = OpenCensus::Trace::SpanBuilder::PieceBuilder.new
     if span['name'] == 'root'
         span_name = builder.truncatable_string(job_id.to_s)
     else
@@ -43,6 +43,14 @@ def s3_trace(job_id)
     obj.body.read
 end
 
+def authorized?(request)
+  auth_token = ENV['AUTH_TOKEN'].to_s
+  Rack::Utils.secure_compare(
+    request.env['HTTP_AUTHORIZATION'].to_s,
+    "token #{auth_token}"
+  )
+end
+
 
 # Setup
 
@@ -52,6 +60,12 @@ Aws.config.update({
 })
 
 # Endpoints:
+
+if ENV['AUTH_TOKEN']
+  before do
+    halt 403 unless authorized?(request)
+  end
+end
 
 get '/' do
     'Welcome to the Travis Build Trace Processor'
