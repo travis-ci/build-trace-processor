@@ -34,7 +34,11 @@ def process_span(job_id, trace_id, span)
         span_name = builder.truncatable_string(span['name'])
     end
     status = builder.convert_status(span['status'], "")
-    attributes = builder.convert_attributes({"app"=>"build", "job_id"=>job_id})
+    attributes = builder.convert_attributes({
+        "app"    => "build",
+        "job_id" => job_id,
+        "site"   => ENV['TRAVIS_SITE'],
+    })
     return OpenCensus::Trace::Span.new trace_id, span['id'], span_name, Time.at(span['start_time'].to_i*1e-9), Time.at(span['end_time'].to_i*1e-9), parent_span_id: span['parent_id'], attributes: attributes, status: status
 end
 
