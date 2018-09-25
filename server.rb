@@ -1,8 +1,12 @@
 require 'sinatra'
 require 'aws-sdk-s3'
+require "logger"
 require 'opencensus'
 require 'opencensus/stackdriver'
 
+
+log = Logger.new(STDOUT)
+log.level = Logger::WARN
 
 def json_params
     begin
@@ -60,16 +64,34 @@ post '/trace' do
         c.trace.exporter = OpenCensus::Trace::Exporters::Stackdriver.new
         c.trace.default_sampler = OpenCensus::Trace::Samplers::AlwaysSample.new
     end
-
-    job_id = json_params["job_id"]
-    tracefile = s3_trace(job_id)
-    span_map = coalesce_spans(tracefile)
-    max_trace_id = OpenCensus::Trace::SpanContext::MAX_TRACE_ID
-    trace_id = rand 1..max_trace_id
-    trace_id = trace_id.to_s(16).rjust(32, "0")
-    spans = []
-    span_map.values.each do |span|
-        spans << process_span(job_id, trace_id, span)
+    request = json_params
+    if !request.key?("job_id")
+        puts request
+        log.error "Couldn't find job_id in request parameters"
+        error 400
+        return
     end
-    OpenCensus::Trace.config.exporter.export spans
+    job_id = request["job_id"]
+    begin
+        tracefile = s3_trace(job_id)
+    rescue Aws::S3::Errors::ServiceError
+        log.error "Couldn't fetch trace file from S3 for job id #{job_id}"
+        error 404
+        return
+    end
+
+    begin
+        span_map = coalesce_spans(tracefile)
+        max_trace_id = OpenCensus::Trace::SpanContext::MAX_TRACE_ID
+        trace_id = rand 1..max_trace_id
+        trace_id = trace_id.to_s(16).rjust(32, "0")
+        spans = []
+        span_map.values.each do |span|
+            spans << process_span(job_id, trace_id, span)
+        end
+        OpenCensus::Trace.config.exporter.export spans
+    rescue
+        log.error "Couldn't process spans for job id #{job_id}"
+        error 500
+    end
 end
