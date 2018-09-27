@@ -30,18 +30,24 @@ def coalesce_spans(tracefile)
     return spans
 end
 
-def process_span(job_id, trace_id, span)
+def process_span(request, trace_id, span)
     builder = OpenCensus::Trace::SpanBuilder::PieceBuilder.new
     if span['name'] == 'root'
-        span_name = builder.truncatable_string(job_id.to_s)
+        root_name = "#{request['repo_slug']} (#{request['job_id']})"
+        span_name = builder.truncatable_string(root_name)
     else
         span_name = builder.truncatable_string(span['name'])
     end
     status = builder.convert_status(span['status'], "")
     attributes = builder.convert_attributes({
-        "app"    => "build",
-        "job_id" => job_id,
-        "site"   => ENV['TRAVIS_SITE'],
+        "app"       => "build",
+        "job_id"    => request['job_id'],
+        "repo_slug" => request['repo_slug'],
+        "repo"      => request['repo'],
+        "owner"     => request['owner'],
+        "queue"     => request['queue'],
+        "state"     => request['state'],
+        "site"      => ENV['TRAVIS_SITE'],
     })
     return OpenCensus::Trace::Span.new trace_id, span['id'], span_name, Time.at(span['start_time'].to_i*1e-9), Time.at(span['end_time'].to_i*1e-9), parent_span_id: span['parent_id'], attributes: attributes, status: status
 end
@@ -91,7 +97,7 @@ post '/trace' do
         trace_id = trace_id.to_s(16).rjust(32, "0")
         spans = []
         span_map.values.each do |span|
-            spans << process_span(job_id, trace_id, span)
+            spans << process_span(request, trace_id, span)
         end
         OpenCensus::Trace.config.exporter.export spans
     rescue
