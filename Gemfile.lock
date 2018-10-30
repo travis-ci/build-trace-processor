@@ -21,6 +21,7 @@ GEM
     concurrent-ruby (1.0.5)
     faraday (0.15.2)
       multipart-post (>= 1.2, < 3)
+    ffi (1.9.25)
     google-cloud-core (1.2.3)
       google-cloud-env (~> 1.0)
     google-cloud-env (1.0.2)
@@ -55,6 +56,7 @@ GEM
     jmespath (1.4.0)
     jwt (2.1.0)
     memoist (0.16.0)
+    msgpack (1.2.4)
     multi_json (1.13.1)
     multipart-post (2.0.0)
     mustermann (1.0.3)
@@ -63,11 +65,16 @@ GEM
       concurrent-ruby (~> 1.0)
       google-cloud-trace (~> 0.31)
       opencensus (~> 0.3)
+    optimist (3.0.0)
     os (1.0.0)
     public_suffix (3.0.3)
     rack (2.0.5)
     rack-protection (2.0.3)
       rack
+    rbtrace (0.4.11)
+      ffi (>= 1.0.6)
+      msgpack (>= 0.4.3)
+      optimist (>= 3.0.0)
     rly (0.2.3)
     signet (0.9.0)
       addressable (~> 2.3)
@@ -81,6 +88,7 @@ GEM
       tilt (~> 2.0)
     stackdriver-core (1.3.0)
       google-cloud-core (~> 1.2)
+    stackprof (0.2.12)
     tilt (2.0.8)
 
 PLATFORMS
@@ -90,10 +98,12 @@ DEPENDENCIES
   aws-sdk-s3
   opencensus
   opencensus-stackdriver
+  rbtrace
   sinatra
+  stackprof
 
 RUBY VERSION
    ruby 2.5.1p57
 
 BUNDLED WITH
-   1.16.4
+   1.16.6

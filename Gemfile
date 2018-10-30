@@ -7,4 +7,5 @@ gem 'opencensus'
 gem 'opencensus-stackdriver'
 gem 'sinatra'
 
-
+gem 'stackprof'
+gem 'rbtrace'

@@ -3,7 +3,7 @@ require 'aws-sdk-s3'
 require "logger"
 require 'opencensus'
 require 'opencensus/stackdriver'
-
+require 'rbtrace'
 
 log = Logger.new(STDOUT)
 log.level = Logger::WARN
