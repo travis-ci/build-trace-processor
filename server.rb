@@ -8,6 +8,11 @@ require 'rbtrace'
 log = Logger.new(STDOUT)
 log.level = Logger::WARN
 
+OpenCensus.configure do |c|
+  c.trace.exporter = OpenCensus::Trace::Exporters::Stackdriver.new
+  c.trace.default_sampler = OpenCensus::Trace::Samplers::AlwaysSample.new
+end
+
 def json_params
     begin
         JSON.parse(request.body.read)
@@ -71,10 +76,6 @@ get '/' do
 end
 
 post '/trace' do
-    OpenCensus.configure do |c|
-        c.trace.exporter = OpenCensus::Trace::Exporters::Stackdriver.new
-        c.trace.default_sampler = OpenCensus::Trace::Samplers::AlwaysSample.new
-    end
     request = json_params
     if !request.key?("job_id")
         puts request
