@@ -6,6 +6,7 @@ gem 'aws-sdk-s3'
 gem 'opencensus'
 gem 'opencensus-stackdriver'
 gem 'sinatra'
+gem 'puma'
 
 gem 'stackprof'
 gem 'rbtrace'

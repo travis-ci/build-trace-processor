@@ -68,6 +68,7 @@ GEM
     optimist (3.0.0)
     os (1.0.0)
     public_suffix (3.0.3)
+    puma (3.12.0)
     rack (2.0.5)
     rack-protection (2.0.3)
       rack
@@ -98,6 +99,7 @@ DEPENDENCIES
   aws-sdk-s3
   opencensus
   opencensus-stackdriver
+  puma
   rbtrace
   sinatra
   stackprof
