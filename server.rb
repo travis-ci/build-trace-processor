@@ -102,8 +102,8 @@ post '/trace' do
             spans << process_span(request, trace_id, span)
         end
         OpenCensus::Trace.config.exporter.export spans
-    rescue
-        log.error "Couldn't process spans for job id #{job_id}"
+    rescue => e
+        log.error "Couldn't process spans for job id #{job_id}, error=#{e}"
         error 500
     end
 end
